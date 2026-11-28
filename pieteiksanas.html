@@ -4,14 +4,20 @@
 const endpoint="https://script.google.com/macros/s/AKfycbz_IZkZACDD54ubamHRPb9wvyd48KyR3VTLHfYO1SE8tMHv420OvFjwtRNvii9YtkoM/exec";
 const form=document.getElementById('registration'),other=form.elements.otherVoice,button=document.getElementById('submit'),feedback=document.getElementById('feedback');
 form.addEventListener('change',()=>{const active=form.elements.voice.value==='Cits';document.getElementById('other-label').hidden=!active;other.disabled=!active;other.required=active;});
+function showRegistrationError(message){
+ feedback.replaceChildren(document.createTextNode(message),document.createElement('br'));
+ const tel=document.createElement('a');tel.href='tel:+37256266439';tel.textContent='+372 56266439';
+ const mail=document.createElement('a');mail.href='mailto:marta.briedee@gmail.com';mail.textContent='marta.briedee@gmail.com';
+ feedback.append(tel,document.createElement('br'),mail);feedback.hidden=false;
+}
 form.addEventListener('submit',async e=>{
 e.preventDefault();if(button.disabled)return;
 const data=new URLSearchParams(new FormData(form));const q=new URLSearchParams(location.search);data.set('source', ['Tests — mājaslapa',...['utm_source','utm_medium','utm_campaign','utm_content'].map(k=>q.get(k)).filter(Boolean)].join(' / ').slice(0,200));
 button.disabled=true;button.textContent=tr('Nosūta pieteikumu…');feedback.hidden=true;
-try{const response=await fetch(endpoint,{signal:AbortSignal.timeout(45000),method:'POST',body:data,credentials:'omit',redirect:'follow'});if(!response.ok)throw new Error('HTTP');const result=await response.json();if(result.success!==true){feedback.textContent=tr('Pieteikumu pašlaik neizdevās apstrādāt. Lūdzu, sazinies ar mums.');feedback.hidden=false;return;}
+try{const response=await fetch(endpoint,{signal:AbortSignal.timeout(45000),method:'POST',body:data,credentials:'omit',redirect:'follow'});if(!response.ok)throw new Error('HTTP');const result=await response.json();if(result.success!==true){showRegistrationError(tr('Pieteikumu pašlaik neizdevās apstrādāt. Lūdzu, sazinies ar mums.'));return;}
 document.getElementById('confirmation-status').textContent=result.duplicate?tr('Pieteikums ar šo e-pasta adresi jau ir reģistrēts.'):result.emailSent?tr('Tavs pieteikums ir saņemts. Apstiprinājuma e-pasts ir nosūtīts.'):tr('Tavs pieteikums ir saņemts, taču e-pasta nosūtīšana vēl nav apstiprināta.');
 form.reset();document.getElementById("registration-section").hidden=true;const confirmation=document.getElementById('confirmation');confirmation.hidden=false;confirmation.focus({preventScroll:true});confirmation.scrollIntoView({block:"center",behavior:"auto"});
-}catch(err){feedback.textContent=tr('Neizdevās pārbaudīt, vai pieteikums ir saņemts. Pirms atkārtotas nosūtīšanas, lūdzu, sazinies ar mums.');feedback.hidden=false;}finally{button.disabled=false;button.textContent=tr('Pieteikties korim →');}
+}catch(err){showRegistrationError(tr('Neizdevās pārbaudīt, vai pieteikums ir saņemts. Pirms atkārtotas nosūtīšanas, lūdzu, sazinies ar mums.'));}finally{button.disabled=false;button.textContent=tr('Pieteikties korim →');}
 });
 const nameField=form.elements.name,phone=form.elements.phone,email=form.elements.email;
 function validateFields(){
